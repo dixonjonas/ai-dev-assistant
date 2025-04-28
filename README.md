@@ -27,7 +27,7 @@ cd ai-dev-assistant
 ```
 
 2. **Set up Environment Variables:**
-The backend requires a Google Gemini API key. Open the `.env` file in the **root directory** of the project.
+The backend requires a Google Gemini API key. Open the `.env` file in the **root directory** (where `docker-compose.yml` is located) of the project.
 
 ```bash
 GOOGLE_API_KEY=YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE
@@ -36,7 +36,7 @@ GOOGLE_API_KEY=YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE
 Replace `YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE` with your valid API key which can be created [here](https://aistudio.google.com/app/apikey).
 
 3. **Build and Run with Docker Compose:**
-Navigate to the root directory of your project in the terminal (where `docker-compose.yml` is located) and run:
+Navigate to the root directory of your project in the terminal and run:
 
 ```bash
 docker-compose up --build
