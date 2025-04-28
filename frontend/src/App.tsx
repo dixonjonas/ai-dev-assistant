@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -8,11 +8,28 @@ type Message = {
   content: string;
 };
 
+// Define the initial message content as a constant
+const INITIAL_MESSAGE_CONTENT = "Hi! I am your personal AI-powered dev assistant. " +
+                                "Please ask me any developer-related question and I " +
+                                "will do my best to answer!";
+
 const App: React.FC = () => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Initialize chatHistory as empty; the initial message will be added via useEffect
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
+
+  // Use useEffect to add the initial message to chatHistory when the component mounts
+  useEffect(() => {
+    const initialMessage: Message = {
+      role: 'assistant',
+      content: INITIAL_MESSAGE_CONTENT,
+    };
+    // Add the initial message as the first message in the history
+    setChatHistory([initialMessage]);
+  }, []); // The empty dependency array [] ensures this effect runs only once on mount
+
 
   const handleSubmit = async () => {
     if (!query.trim()) return; // Don't send empty queries
@@ -22,18 +39,24 @@ const App: React.FC = () => {
 
     const userMessage: Message = { role: 'user', content: query };
     // Add user message and a placeholder for the assistant message immediately
+    // The initial message is already in chatHistory, so append new messages
     setChatHistory((prev) => [...prev, userMessage, { role: 'assistant', content: '' }]);
 
-    setQuery(''); // Clear input immediately after adding user message
+    // Clear input immediately after adding user message
+    setQuery('');
 
     try {
+      // IMPORTANT: Send the history *excluding* the initial message (the first element)
+      // to the backend, as it's just a frontend welcome
+      const historyToSend = chatHistory.slice(1);
+
       const res = await fetch('http://localhost:3001/api/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          history: chatHistory, 
+          history: historyToSend, // Send history excluding the initial message
           query: query,
         }),
       });
@@ -71,8 +94,9 @@ const App: React.FC = () => {
       // If an error occurs, remove the placeholder assistant message
        setChatHistory((prev) => {
           const newHistory = [...prev];
-           if (newHistory.length > 0 && newHistory[newHistory.length - 1].content === '') {
-               newHistory.pop(); // Remove the empty assistant message if streaming failed
+           if (newHistory.length > 0 && newHistory[newHistory.length - 1].content === '' && newHistory.length > 1) {
+               // Only pop if it's the last message AND not the initial welcome message
+               newHistory.pop();
            }
            return newHistory;
        });
@@ -94,7 +118,6 @@ const App: React.FC = () => {
       boxSizing: 'border-box', // Include padding in the height calculation
     }}>
       {/* Define the spinning animation keyframes */}
-      {/* Keep this style block if you haven't defined @keyframes spin elsewhere */}
       <style>
         {`
           @keyframes spin {
@@ -104,7 +127,17 @@ const App: React.FC = () => {
         `}
       </style>
 
-      <h1>AI Developer Assistant</h1>
+      <h1 style={{
+        color: '#007bff', // Use the button's blue color
+        fontSize: '2em', // Make it a bit larger
+        marginBottom: '20px', // Ensure space below the header
+        textAlign: 'center', // Center the text
+      }}>
+        AI Dev Assistant
+      </h1>
+
+      {/* --- REMOVED: The static Initial Assistant Message JSX block is removed --- */}
+
 
       {/* Chat History Container: Occupy available space and be scrollable */}
       <div style={{
@@ -112,6 +145,7 @@ const App: React.FC = () => {
         overflowY: 'auto', // Add scrollbar when content overflows (scrollbar will be on the right of this div)
         paddingBottom: 100, // Add padding at the bottom to prevent content from being hidden by the input area
       }}>
+        {/* This map now includes the initial message because it's in chatHistory */}
         {chatHistory.map((msg, idx) => (
           <div key={idx} style={{ marginBottom: 10 }}>
             <strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong>
@@ -189,8 +223,8 @@ const App: React.FC = () => {
            <div style={{
              position: 'absolute', // Position relative to the outer container
              // Adjusted position slightly
-             bottom: 6, // Adjusted from 6
-             right: 6,  // Adjusted from 6
+             bottom: 6, // Adjusted from 6 - reverted to 6, let's trust the math for now
+             right: 6,  // Adjusted from 6 - reverted to 6
              width: 44, // Ring size
              height: 44, // Ring size
              borderRadius: '50%',
@@ -227,7 +261,17 @@ const App: React.FC = () => {
             title={loading ? 'Loading...' : 'Send'}
          >
            {/* Simple Send Icon (SVG) */}
-           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+           <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
              <line x1="22" y1="2" x2="11" y2="13"></line>
              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
            </svg>
@@ -240,6 +284,6 @@ const App: React.FC = () => {
 
     </div>
   );
-};
+}; // Keep the closing brace for the component
 
 export default App;
