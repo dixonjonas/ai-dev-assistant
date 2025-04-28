@@ -15,8 +15,6 @@ app.use(express.json());
 // Define the port to run the server on
 const PORT = process.env.PORT || 3001;
 
-//remove google API from project
-
 // Define the system prompt for the LLM
 const SYSTEM_PROMPT = "You are a developer assistant designed to help software engineers quickly answer their technical queries in " +
                             "natural language. Your goal is to provide concise, accurate, and relevant responses for a wide range of " +
