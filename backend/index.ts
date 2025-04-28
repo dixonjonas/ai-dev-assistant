@@ -12,11 +12,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 
-// Define an initial output to be placed for example "Hello I am a developer assistant ..."
-
 //comment all code
-
-//handle errors gracefully
 
 //remove google API from project
 
@@ -66,10 +62,17 @@ const model = new ChatGoogleGenerativeAI({
 
       res.end();
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Something went wrong during streaming.' });
-    }
-});
+        console.error('Backend streaming error:', error); // Log the error on the server side
+    
+        // Check if streaming has started. If so, end the response.
+        // Otherwise send a standard 500 JSON error response.
+        if (res.headersSent) {
+          res.end();
+        } else {
+          res.status(500).json({ error: 'Failed to get a response from the AI.' });
+        }
+      }
+    });
   
 
 app.listen(PORT, () => {

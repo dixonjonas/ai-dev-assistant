@@ -1,3 +1,4 @@
+//Imports
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -35,7 +36,7 @@ const App: React.FC = () => {
     if (!query.trim()) return; // Don't send empty queries
 
     setLoading(true);
-    setError(null);
+    setError(null); // Clear any previous errors on new submission
 
     const userMessage: Message = { role: 'user', content: query };
     // Add user message and a placeholder for the assistant message immediately
@@ -61,7 +62,36 @@ const App: React.FC = () => {
         }),
       });
 
-      if (!res.body) throw new Error('No response body');
+      // *** Added: Check for non-OK HTTP status before attempting to stream ***
+      if (!res.ok) {
+        let errorDetail = `Status: ${res.status} ${res.statusText || ''}`;
+        try {
+          // Attempt to read a non-streaming error body for more info
+          // Use res.json() if your backend sends JSON errors, otherwise res.text()
+          const errorBody = await res.text();
+          if (errorBody) {
+              // Try parsing as JSON in case backend sends { error: "..." }
+              try {
+                  const errorJson = JSON.parse(errorBody);
+                   errorDetail += ` - ${errorJson.error || JSON.stringify(errorJson)}`;
+              } catch (parseError) {
+                  // If not JSON, just append the text body
+                   errorDetail += ` - ${errorBody}`;
+              }
+          }
+        } catch (readError) {
+          console.error('Failed to read error response body:', readError);
+          // If reading the body fails, the basic status info is all we have
+        }
+        // Throw an error with more detail which will be caught below
+        throw new Error(`Server responded with an error: ${errorDetail}`);
+      }
+      // *** End Added Check ***
+
+
+      if (!res.body) {
+         throw new Error('No response body received.'); // More specific message
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8');
@@ -70,7 +100,13 @@ const App: React.FC = () => {
 
       while (true) {
         const { done, value } = await reader.read();
+        // If done is true before receiving any content and not loading, might be an empty stream
+        if (done && assistantReplyContent === '' && !loading) {
+             // This case might indicate an issue where the stream closed immediately
+              throw new Error('Received an empty response stream.');
+        }
         if (done) break;
+
 
         const chunk = decoder.decode(value, { stream: true });
         assistantReplyContent += chunk;
@@ -88,18 +124,42 @@ const App: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 50)); //Slowing down stream slightly for effect
       }
 
+      // If the loop finishes successfully, the full message is in chatHistory
+
     } catch (error) {
-      console.error(error);
-      setError('Failed to get a response from the server.');
-      // If an error occurs, remove the placeholder assistant message
+      console.error('Frontend request failed:', error); // Log the technical error
+
+      let userMessage = 'An unexpected error occurred. Please try again.'; // Default fallback message
+
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          // This specific message often indicates a network error or server is down
+          userMessage = 'Could not connect to the AI assistant. Please ensure the backend server is running or try again later.';
+        } else if (error.message.includes('Server responded with an error:')) {
+           // Use the more detailed error message we added earlier for server-side errors
+           userMessage = error.message;
+        } else {
+           // For other types of errors caught
+           userMessage = `Request failed: ${error.message}`;
+        }
+      }
+
+      // Set the more user-friendly message in the state
+      setError(userMessage);
+
+      // Keep the logic to remove the placeholder assistant message if needed
        setChatHistory((prev) => {
           const newHistory = [...prev];
-           if (newHistory.length > 0 && newHistory[newHistory.length - 1].content === '' && newHistory.length > 1) {
-               // Only pop if it's the last message AND not the initial welcome message
-               newHistory.pop();
+           // Check if the last message is an assistant placeholder with no content
+           if (newHistory.length > 0 && newHistory[newHistory.length - 1].role === 'assistant' && newHistory[newHistory.length - 1].content === '') {
+               // Only remove it if it's not the initial welcome message (check length > 1)
+               if (newHistory.length > 1) {
+                 newHistory.pop();
+               }
            }
            return newHistory;
        });
+
     } finally {
       setLoading(false);
     }
