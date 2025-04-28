@@ -53,10 +53,12 @@ const App: React.FC = () => {
       // Prepare history for the backend (excluding the welcome message)
       const historyToSend = chatHistory.slice(1);
 
-      // Send the query and history to the backend API
+      // Configure for Docker
       const backendHost = process.env.REACT_APP_BACKEND_HOST || 'localhost';
       const backendPort = process.env.REACT_APP_BACKEND_PORT || 3001;
       const backendUrl = `http://${backendHost}:${backendPort}/api/query`;
+
+      // Send the query and history to the backend API
       const res = await fetch(backendUrl, {
         method: 'POST',
         headers: {

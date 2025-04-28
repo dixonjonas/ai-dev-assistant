@@ -1,5 +1,30 @@
-# ai-dev-assistant
-A minimalistic developer assistant prototype
+# AI Developer Assistant
+
+This project is an AI-powered developer assistant with a React frontend and a Node.js backend, designed to answer technical queries. The application is containerized using Docker and can be run using Docker Compose.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+* **Git:** For cloning the repository.
+
+  * [Download Git](https://git-scm.com/downloads)
+
+* **Docker:** For building and running the containers.
+
+  * [Download Docker](https://www.docker.com/get-started)
+
+* **Docker Compose:** Usually comes bundled with Docker Desktop.
+
+  * [Install Docker Compose](https://docs.docker.com/compose/install/)
+
+## Setup Instructions
+
+Follow these steps to get the application running locally using Docker Compose:
+
+1. **Clone the Repository:**
+   Open your terminal or command prompt and clone the project repository:
+
 
 Though and work process:
 
