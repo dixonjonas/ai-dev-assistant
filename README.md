@@ -62,19 +62,18 @@ To remove the containers and the network created by Docker Compose, run:
 ```bash
 docker-compose down
 ```
-
 This cleans up the resources created by `docker-compose up`.
 
-Thought and work process:
+## Thought Process and Approach
 
-1, Start with the newest for me, setting up the react and typescript front-end to backend connection
+My approach to building this AI Developer Assistant involved an iterative process, prioritizing core functionality and user experience:
 
-2, Try calling a simple LLM (Step by step approach from here with iterative testing)
+* **Establishing the Foundation:** I began by setting up the communication layer between the React/TypeScript frontend and the Node.js backend, ensuring data could be exchanged reliably.
 
-3, Think about what the user would want: Clean and easy-to-use interface, necessary functionalities such as being being aware of previous conversation history.
+* **Integrating the AI Core:** The next step was to integrate the LLM in the backend. This started with implementing a basic query-response mechanism and then iteratively expanding the complexity of the application. Google Gemini was selected as the main LLM as it is a powerful model with a free API.
 
-4, Scale up backend to where I want it to be
-
-5, Scale up frontend
-
-6, Testing: (Inputting non dev questions, simulating errors such as backend not being connected, testing with wide array of coding questions, etc)
+* **Developing the Frontend** Next, the frontend UI was developed. Here I focused on creating a simple and responsive interface that allowed users to easily input queries and view AI responses. Only essential buttons and layout adjustments were added, keeping the design clean and functional.
+ 
+* **Focusing on User Experience:** Throughout development, I kept the end-user in mind, aiming for a clean and intuitive interface. A key feature prioritized early was maintaining conversation history, an important aspect in any functional AI-assistant. Continuous streaming of the output was also added to enhance the user experience.
+ 
+* **Comprehensive Testing:** A significant part of the process involved testing. This included verifying the assistant's responses to various coding questions, testing its handling of non-developer queries (as per the system prompt), and simulating various error conditions (like the backend being disconnected) to ensure graceful error handling.
