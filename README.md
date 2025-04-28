@@ -14,10 +14,6 @@ Before you begin, ensure you have the following installed on your system:
 
   * [Download Docker](https://www.docker.com/get-started)
 
-* **Docker Compose:** Usually comes bundled with Docker Desktop.
-
-  * [Install Docker Compose](https://docs.docker.com/compose/install/)
-
 ## Setup Instructions
 
 Follow these steps to get the application running locally using Docker Compose:
@@ -25,6 +21,22 @@ Follow these steps to get the application running locally using Docker Compose:
 1. **Clone the Repository:**
    Open your terminal or command prompt and clone the project repository:
 
+```bash
+git clone https://github.com/dixonjonas/ai-dev-assistant
+cd ai-dev-assistant
+```
+
+2. **Set up Environment Variables:**
+The backend requires a Google Gemini API key. Open the `.env` file in the **root directory** of the project.
+
+```bash
+GOOGLE_API_KEY=YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE
+```
+
+Replace `YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE` with your valid API key. 
+
+3. **Build and Run with Docker Compose:**
+Navigate to the root directory of your project in the terminal (where `docker-compose.yml` is located). Build the Docker images and start the services:
 
 Though and work process:
 
