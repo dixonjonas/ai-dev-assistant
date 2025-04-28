@@ -3,180 +3,185 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+// Define the structure for a chat message
 type Message = {
   role: 'user' | 'assistant';
   content: string;
 };
 
-// Define the initial message content as a constant
+// Define the initial welcome message from the dev assistant
 const INITIAL_MESSAGE_CONTENT = "Hi! I am your personal AI-powered dev assistant. " +
                                 "Please ask me any developer-related question and I " +
                                 "will do my best to answer!";
 
+// Main application
 const App: React.FC = () => {
+  // State variables to manage the UI and chat data
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Initialize chatHistory as empty; the initial message will be added via useEffect
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
 
-  // Use useEffect to add the initial message to chatHistory when the component mounts
+  // Using useEffect to add the initial welcome message to the chat
   useEffect(() => {
     const initialMessage: Message = {
       role: 'assistant',
       content: INITIAL_MESSAGE_CONTENT,
     };
-    // Add the initial message as the first message in the history
+    // Add the welcome message as the first message in the history
     setChatHistory([initialMessage]);
-  }, []); // The empty dependency array [] ensures this effect runs only once on mount
+  }, []); 
 
-
+  // Async function to handle user query submissions
   const handleSubmit = async () => {
-    if (!query.trim()) return; // Don't send empty queries
+    // Prevent sending empty queries
+    if (!query.trim()) return; 
 
+    // Update UI state for loading and clear previous errors
     setLoading(true);
-    setError(null); // Clear any previous errors on new submission
+    setError(null); 
 
+    // Add the user message and an empty assistant placeholder to history
     const userMessage: Message = { role: 'user', content: query };
-    // Add user message and a placeholder for the assistant message immediately
-    // The initial message is already in chatHistory, so append new messages
     setChatHistory((prev) => [...prev, userMessage, { role: 'assistant', content: '' }]);
 
-    // Clear input immediately after adding user message
+    // Clear input
     setQuery('');
 
+
     try {
-      // IMPORTANT: Send the history *excluding* the initial message (the first element)
-      // to the backend, as it's just a frontend welcome
+      // Prepare history for the backend (excluding the welcome message)
       const historyToSend = chatHistory.slice(1);
 
+      // Send the query and history to the backend API
       const res = await fetch('http://localhost:3001/api/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          history: historyToSend, // Send history excluding the initial message
+          history: historyToSend,
           query: query,
         }),
       });
 
-      // *** Added: Check for non-OK HTTP status before attempting to stream ***
+      // Check for HTTP status codes that indicate errors
       if (!res.ok) {
         let errorDetail = `Status: ${res.status} ${res.statusText || ''}`;
+        // Attempt to read the response body for more error details
         try {
-          // Attempt to read a non-streaming error body for more info
-          // Use res.json() if your backend sends JSON errors, otherwise res.text()
           const errorBody = await res.text();
           if (errorBody) {
-              // Try parsing as JSON in case backend sends { error: "..." }
               try {
+                  // Try parsing as JSON
                   const errorJson = JSON.parse(errorBody);
-                   errorDetail += ` - ${errorJson.error || JSON.stringify(errorJson)}`;
-              } catch (parseError) {
-                  // If not JSON, just append the text body
-                   errorDetail += ` - ${errorBody}`;
+                  errorDetail += ` - ${errorJson.error || JSON.stringify(errorJson)}`;
+              } catch (parseError) { 
+                  // If JSON parsing fails, use plain text
+                  errorDetail += ` - ${errorBody}`;
               }
           }
-        } catch (readError) {
+        } catch (readError) { 
+          // Log in console if reading body fails
           console.error('Failed to read error response body:', readError);
-          // If reading the body fails, the basic status info is all we have
         }
-        // Throw an error with more detail which will be caught below
+        // Throw an error with the collected details
         throw new Error(`Server responded with an error: ${errorDetail}`);
       }
-      // *** End Added Check ***
-
-
+      
+      // Ensure there is a readable response body for streaming
       if (!res.body) {
-         throw new Error('No response body received.'); // More specific message
+         throw new Error('No response body received.');
       }
 
+      // Get a reader for the response stream and a decoder
       const reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8');
 
+      // Stores the assistant's message chunks during streaming
       let assistantReplyContent = '';
 
+      // Read the stream chunk by chunk
       while (true) {
         const { done, value } = await reader.read();
-        // If done is true before receiving any content and not loading, might be an empty stream
+        
+        // Check for an empty stream received immediately
         if (done && assistantReplyContent === '' && !loading) {
              // This case might indicate an issue where the stream closed immediately
               throw new Error('Received an empty response stream.');
         }
+        // Break when the stream is done
         if (done) break;
 
-
+        // Decode the chunk and append to the assistant's reply
         const chunk = decoder.decode(value, { stream: true });
         assistantReplyContent += chunk;
 
-        // Update the content of the *last* message in chatHistory
+        // Update the content of the latest assistant message in history with the new chunk
         setChatHistory((prev) => {
           const newHistory = [...prev];
-          // Assuming the last message is always the assistant's streaming message
           if (newHistory.length > 0 && newHistory[newHistory.length - 1].role === 'assistant') {
              newHistory[newHistory.length - 1].content = assistantReplyContent;
           }
           return newHistory;
         });
 
-        await new Promise(resolve => setTimeout(resolve, 50)); //Slowing down stream slightly for effect
+        // Slowing down the stream slightly for a better streaming effect
+        await new Promise(resolve => setTimeout(resolve, 50)); 
       }
 
-      // If the loop finishes successfully, the full message is in chatHistory
-
+      // Error handling
     } catch (error) {
-      console.error('Frontend request failed:', error); // Log the technical error
+      // Log the error
+      console.error('Frontend request failed:', error); 
 
-      let userMessage = 'An unexpected error occurred. Please try again.'; // Default fallback message
-
+      // Determine a user-friendly error message based on the error type
+      let userMessage = 'An unexpected error occurred. Please try again.';
       if (error instanceof Error) {
         if (error.message.includes('Failed to fetch')) {
-          // This specific message often indicates a network error or server is down
           userMessage = 'Could not connect to the AI assistant. Please ensure the backend server is running or try again later.';
         } else if (error.message.includes('Server responded with an error:')) {
-           // Use the more detailed error message we added earlier for server-side errors
            userMessage = error.message;
         } else {
-           // For other types of errors caught
            userMessage = `Request failed: ${error.message}`;
         }
       }
 
-      // Set the more user-friendly message in the state
+      // Display the user-friendly error message
       setError(userMessage);
 
-      // Keep the logic to remove the placeholder assistant message if needed
-       setChatHistory((prev) => {
-          const newHistory = [...prev];
-           // Check if the last message is an assistant placeholder with no content
-           if (newHistory.length > 0 && newHistory[newHistory.length - 1].role === 'assistant' && newHistory[newHistory.length - 1].content === '') {
-               // Only remove it if it's not the initial welcome message (check length > 1)
-               if (newHistory.length > 1) {
-                 newHistory.pop();
-               }
-           }
-           return newHistory;
-       });
+      // Remove the empty assistant placeholder message from history if the request failed
+      setChatHistory((prev) => {
+        const newHistory = [...prev];
+          // Check if the last message is an empty assistant placeholder
+          if (newHistory.length > 0 && newHistory[newHistory.length - 1].role === 'assistant' && newHistory[newHistory.length - 1].content === '') {
+            // Remove it if it's not the initial welcome message
+            if (newHistory.length > 1) {
+              newHistory.pop();
+            }
+          }
+        return newHistory;
+      });
 
+    // Reset loading state regardless of success or failure
     } finally {
       setLoading(false);
     }
   };
 
-
+  // JSX to render the UI
   return (
-    // Main container: Use flexbox column, take full viewport height
+    // Main container
     <div style={{
-      maxWidth: 900, // You can adjust this value
+      maxWidth: 900, 
       margin: 'auto',
       padding: 20,
-      height: '100vh', // Take full viewport height
+      height: '100vh', 
       display: 'flex',
       flexDirection: 'column',
-      boxSizing: 'border-box', // Include padding in the height calculation
+      boxSizing: 'border-box', 
     }}>
-      {/* Define the spinning animation keyframes */}
+      {/* Define the spinning loading animation keyframes */}
       <style>
         {`
           @keyframes spin {
@@ -185,37 +190,37 @@ const App: React.FC = () => {
           }
         `}
       </style>
-
+      
+      {/* Application Header */}
       <h1 style={{
-        color: '#007bff', // Use the button's blue color
-        fontSize: '2em', // Make it a bit larger
-        marginBottom: '20px', // Ensure space below the header
-        textAlign: 'center', // Center the text
+        color: '#007bff', 
+        fontSize: '2em', 
+        marginBottom: '20px', 
+        textAlign: 'center', 
       }}>
         AI Dev Assistant
       </h1>
 
-      {/* --- REMOVED: The static Initial Assistant Message JSX block is removed --- */}
-
-
-      {/* Chat History Container: Occupy available space and be scrollable */}
+      {/* Container for displaying chat messages (scrollable) */}
       <div style={{
-        flex: 1, // Makes this div grow and take up available vertical space
-        overflowY: 'auto', // Add scrollbar when content overflows (scrollbar will be on the right of this div)
-        paddingBottom: 100, // Add padding at the bottom to prevent content from being hidden by the input area
+        flex: 1, 
+        overflowY: 'auto', 
+        paddingBottom: 100, 
       }}>
-        {/* This map now includes the initial message because it's in chatHistory */}
+        {/* Map over the chat history array to render each message */}
         {chatHistory.map((msg, idx) => (
           <div key={idx} style={{ marginBottom: 10 }}>
             <strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong>
             <div style={{ marginTop: 5, paddingLeft: 10 }}>
+              {/* ReactMarkdown component to format message content */}
               <ReactMarkdown
                 components={{
+                  // Custom component for rendering code blocks (syntax highlighting included)
                   code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || '');
                     return !inline && match ? (
                       <SyntaxHighlighter
-                         key={idx + '-code-' + String(children).length} // Use a unique key for streaming updates
+                         key={idx + '-code-' + String(children).length} 
                         style={oneDark}
                         language={match[1]}
                         PreTag="div"
@@ -238,37 +243,36 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      {/* Input Area Container: Stays at the bottom */}
-      {/* This div is the positioning context for the absolute button and ring */}
+      {/* Container for the input area (fixed to the bottom) */}
       <div style={{
-         padding: 10, // Padding inside the border
+         padding: 10, 
          backgroundColor: '#fff',
-         position: 'relative', // Crucial for positioning the button and ring inside
+         position: 'relative', 
          borderRadius: 8,
          border: '1px solid #ccc',
          marginTop: 10,
-         display: 'flex', // Use flex to manage textarea and potential error below
+         display: 'flex', 
          flexDirection: 'column',
       }}>
-         {/* Textarea */}
+         {/* User input area */}
          <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask your question..."
+            placeholder="Ask AI Dev Assistant"
             style={{
-              width: '100%', // Takes 100% of parent width minus padding
+              width: '100%', 
               height: 100,
-              padding: 10, // Padding inside textarea
-              paddingRight: 50, // Add padding on the right to make space for the button
-              marginBottom: 0, // Remove margin bottom from textarea
-              display: 'block', // Ensure block behavior for width
-              boxSizing: 'border-box', // Include padding in width
-              borderRadius: 8, // Rounded corners for the textarea itself
-              borderColor: '#eee', // Lighter border for textarea
-              resize: 'none', // Prevent manual resizing
-              outline: 'none', // Remove outline on focus if desired
-              // Remove position/relative/absolute styles
+              padding: 10, 
+              paddingRight: 50, 
+              marginBottom: 0, 
+              display: 'block', 
+              boxSizing: 'border-box', 
+              borderRadius: 8, 
+              borderColor: '#eee', 
+              resize: 'none', 
+              outline: 'none', 
             }}
+            // Allow pressing Enter for submitting user query
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -277,33 +281,30 @@ const App: React.FC = () => {
             }}
          />
 
-         {/* The Spinning Ring Element - Renders only when loading */}
+         {/* The loading element around the submission button */}
          {loading && (
            <div style={{
-             position: 'absolute', // Position relative to the outer container
-             // Adjusted position slightly
-             bottom: 6, // Adjusted from 6 - reverted to 6, let's trust the math for now
-             right: 6,  // Adjusted from 6 - reverted to 6
-             width: 44, // Ring size
-             height: 44, // Ring size
+             position: 'absolute', 
+             bottom: 6, 
+             right: 6,  
+             width: 44, 
+             height: 44, 
              borderRadius: '50%',
-             border: '4px solid rgba(255, 255, 255, 0.3)', // Light gray transparent border
-             borderTop: '4px solid #007bff', // Blue top border (the spinning part)
-             animation: 'spin 1s linear infinite', // Apply the spin animation
-             // Ensure it's visually above the button if needed (though often not necessary)
-             // zIndex: 1,
+             border: '4px solid rgba(255, 255, 255, 0.3)', 
+             borderTop: '4px solid #007bff', 
+             animation: 'spin 1s linear infinite', 
            }}>
            </div>
          )}
 
-         {/* The Button Element - Positioned relative to the outer container */}
+         {/* The submission button element */}
          <button
             onClick={handleSubmit}
             disabled={loading || !query.trim()}
             style={{
-              position: 'absolute', // Position relative to the outer container
-              bottom: 14, // 10px from the inner bottom edge
-              right: 14,  // 10px from the inner right edge
+              position: 'absolute', 
+              bottom: 14, 
+              right: 14,
               width: 36,
               height: 36,
               borderRadius: '50%',
@@ -315,11 +316,10 @@ const App: React.FC = () => {
               justifyContent: 'center',
               alignItems: 'center',
               transition: 'background-color 0.2s ease',
-              // REMOVED: animation style
             }}
             title={loading ? 'Loading...' : 'Send'}
          >
-           {/* Simple Send Icon (SVG) */}
+           {/* The submission button icon */}
            <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -336,13 +336,12 @@ const App: React.FC = () => {
            </svg>
          </button>
 
-
+         {/* Display an error message if the 'error' state is not null */}
          {error && <p style={{ color: 'red', marginTop: 10, marginBottom: 0 }}>{error}</p>}
       </div>
-
-
     </div>
   );
-}; // Keep the closing brace for the component
+}; 
 
+// Export the application
 export default App;
