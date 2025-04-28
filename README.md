@@ -45,7 +45,7 @@ docker-compose up --build
 Docker Compose will create the necessary Docker network, build the images, and start the backend and frontend containers. You will see logs from both services in your terminal.
 
 4. **Access the Application:**
-Once the services are up and running (look for messages indicating the backend is listening and the frontend build is complete, followed by Nginx starting), open your web browser and go to:
+Once the services are up and running, open your web browser and go to:
 
 ```bash
 http://localhost:3000
