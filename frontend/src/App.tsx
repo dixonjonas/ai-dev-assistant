@@ -83,10 +83,35 @@ const App: React.FC = () => {
 
 
   return (
-    <div style={{ maxWidth: 600, margin: 'auto', padding: 20 }}>
+    // Main container: Use flexbox column, take full viewport height
+    <div style={{
+      maxWidth: 900, // You can adjust this value
+      margin: 'auto',
+      padding: 20,
+      height: '100vh', // Take full viewport height
+      display: 'flex',
+      flexDirection: 'column',
+      boxSizing: 'border-box', // Include padding in the height calculation
+    }}>
+      {/* Define the spinning animation keyframes */}
+      {/* Keep this style block if you haven't defined @keyframes spin elsewhere */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+
       <h1>AI Developer Assistant</h1>
 
-      <div style={{ marginBottom: 20 }}>
+      {/* Chat History Container: Occupy available space and be scrollable */}
+      <div style={{
+        flex: 1, // Makes this div grow and take up available vertical space
+        overflowY: 'auto', // Add scrollbar when content overflows (scrollbar will be on the right of this div)
+        paddingBottom: 100, // Add padding at the bottom to prevent content from being hidden by the input area
+      }}>
         {chatHistory.map((msg, idx) => (
           <div key={idx} style={{ marginBottom: 10 }}>
             <strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong>
@@ -97,8 +122,7 @@ const App: React.FC = () => {
                     const match = /language-(\w+)/.exec(className || '');
                     return !inline && match ? (
                       <SyntaxHighlighter
-                        // Use a unique key for the highlighter to force re-render during streaming
-                        key={idx + '-code-' + String(children).length}
+                         key={idx + '-code-' + String(children).length} // Use a unique key for streaming updates
                         style={oneDark}
                         language={match[1]}
                         PreTag="div"
@@ -121,26 +145,99 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      <textarea
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Ask your question..."
-        style={{ width: '100%', height: 100, marginBottom: 10 }}
-        // Allow pressing Enter to submit
-         onKeyDown={(e) => {
-           if (e.key === 'Enter' && !e.shiftKey) {
-             e.preventDefault(); // Prevent newline in textarea
-             handleSubmit();
-           }
-         }}
-      />
-      <br />
-      <button onClick={handleSubmit} disabled={loading || !query.trim()} style={{ marginBottom: 10 }}>
-        {loading ? 'Loading...' : 'Submit'}
-      </button>
+      {/* Input Area Container: Stays at the bottom */}
+      {/* This div is the positioning context for the absolute button and ring */}
+      <div style={{
+         padding: 10, // Padding inside the border
+         backgroundColor: '#fff',
+         position: 'relative', // Crucial for positioning the button and ring inside
+         borderRadius: 8,
+         border: '1px solid #ccc',
+         marginTop: 10,
+         display: 'flex', // Use flex to manage textarea and potential error below
+         flexDirection: 'column',
+      }}>
+         {/* Textarea */}
+         <textarea
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ask your question..."
+            style={{
+              width: '100%', // Takes 100% of parent width minus padding
+              height: 100,
+              padding: 10, // Padding inside textarea
+              paddingRight: 50, // Add padding on the right to make space for the button
+              marginBottom: 0, // Remove margin bottom from textarea
+              display: 'block', // Ensure block behavior for width
+              boxSizing: 'border-box', // Include padding in width
+              borderRadius: 8, // Rounded corners for the textarea itself
+              borderColor: '#eee', // Lighter border for textarea
+              resize: 'none', // Prevent manual resizing
+              outline: 'none', // Remove outline on focus if desired
+              // Remove position/relative/absolute styles
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+         />
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    
+         {/* The Spinning Ring Element - Renders only when loading */}
+         {loading && (
+           <div style={{
+             position: 'absolute', // Position relative to the outer container
+             // Adjusted position slightly
+             bottom: 6, // Adjusted from 6
+             right: 6,  // Adjusted from 6
+             width: 44, // Ring size
+             height: 44, // Ring size
+             borderRadius: '50%',
+             border: '4px solid rgba(255, 255, 255, 0.3)', // Light gray transparent border
+             borderTop: '4px solid #007bff', // Blue top border (the spinning part)
+             animation: 'spin 1s linear infinite', // Apply the spin animation
+             // Ensure it's visually above the button if needed (though often not necessary)
+             // zIndex: 1,
+           }}>
+           </div>
+         )}
+
+         {/* The Button Element - Positioned relative to the outer container */}
+         <button
+            onClick={handleSubmit}
+            disabled={loading || !query.trim()}
+            style={{
+              position: 'absolute', // Position relative to the outer container
+              bottom: 14, // 10px from the inner bottom edge
+              right: 14,  // 10px from the inner right edge
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              backgroundColor: loading ? '#ccc' : '#007bff',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              transition: 'background-color 0.2s ease',
+              // REMOVED: animation style
+            }}
+            title={loading ? 'Loading...' : 'Send'}
+         >
+           {/* Simple Send Icon (SVG) */}
+           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+             <line x1="22" y1="2" x2="11" y2="13"></line>
+             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+           </svg>
+         </button>
+
+
+         {error && <p style={{ color: 'red', marginTop: 10, marginBottom: 0 }}>{error}</p>}
+      </div>
+
+
     </div>
   );
 };
