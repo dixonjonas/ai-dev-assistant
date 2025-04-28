@@ -33,10 +33,37 @@ The backend requires a Google Gemini API key. Open the `.env` file in the **root
 GOOGLE_API_KEY=YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE
 ```
 
-Replace `YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE` with your valid API key. 
+Replace `YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE` with your valid API key which can be created [here](https://aistudio.google.com/app/apikey).
 
 3. **Build and Run with Docker Compose:**
-Navigate to the root directory of your project in the terminal (where `docker-compose.yml` is located). Build the Docker images and start the services:
+Navigate to the root directory of your project in the terminal (where `docker-compose.yml` is located) and run:
+
+```bash
+docker-compose up
+```
+
+Docker Compose will create the necessary Docker network, build the images, and start the backend and frontend containers. You will see logs from both services in your terminal.
+
+4. **Access the Application:**
+Once the services are up and running (look for messages indicating the backend is listening and the frontend build is complete, followed by Nginx starting), open your web browser and go to:
+
+```bash
+http://localhost:3000
+```
+
+The frontend application should load, and you can start interacting with the AI Developer Assistant.
+
+## Stopping the Application
+
+To stop the running Docker containers, press `Ctrl + C` in the terminal where `docker-compose up` is running.
+
+To remove the containers and the network created by Docker Compose, run:
+
+```bash
+docker-compose down
+```
+
+This cleans up the resources created by `docker-compose up`.
 
 Though and work process:
 
