@@ -53,7 +53,7 @@ http://localhost:3000
 
 The frontend application should load, and you can start interacting with the AI Developer Assistant.
 
-## Stopping the Application
+5. **Stopping the Application**
 
 To stop the running Docker containers, press `Ctrl + C` in the terminal where `docker-compose up` is running.
 
@@ -65,7 +65,7 @@ docker-compose down
 
 This cleans up the resources created by `docker-compose up`.
 
-Though and work process:
+Thought and work process:
 
 1, Start with the newest for me, setting up the react and typescript front-end to backend connection
 
