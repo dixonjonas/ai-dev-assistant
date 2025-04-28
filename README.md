@@ -55,7 +55,7 @@ The frontend application should load, and you can start interacting with the AI 
 
 5. **Stopping the Application**
 
-To stop the running Docker containers, press `Ctrl + C` in the terminal where `docker-compose up` is running.
+To stop the running Docker containers, press `Ctrl + C` in the terminal where the Docker container is running.
 
 To remove the containers and the network created by Docker Compose, run:
 
