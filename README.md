@@ -74,6 +74,6 @@ My approach to building this AI Developer Assistant involved an iterative proces
 
 * **Developing the Frontend** Next, the frontend UI was developed. Here I focused on creating a simple and responsive interface that allowed users to easily input queries and view AI responses. Only essential buttons and layout adjustments were added, keeping the design clean and functional.
  
-* **Focusing on User Experience:** Throughout development, I kept the end-user in mind, aiming for a clean and intuitive interface. A key feature prioritized early was maintaining conversation history, an important aspect in any functional AI-assistant. Continuous streaming of the output was also added to enhance the user experience.
+* **Focusing on User Experience:** Throughout development, I kept the end-user in mind, aiming for a clean and intuitive interface. A key feature prioritized early was maintaining conversation history, an important aspect for any good AI-assistant. Continuous streaming of the output was also added to enhance the user experience.
  
 * **Comprehensive Testing:** A significant part of the process involved testing. This included verifying the assistant's responses to various coding questions, testing its handling of non-developer queries (as per the system prompt), and simulating various error conditions (like the backend being disconnected) to ensure graceful error handling.
