@@ -27,7 +27,7 @@ cd ai-dev-assistant
 ```
 
 2. **Set up Environment Variables:**
-The backend requires a Google Gemini API key. Open the `.env` file in the root directory (where `docker-compose.yml` is located) of the project.
+The backend requires a Google Gemini API key. Open the `.env` file in the root directory of the project (where `docker-compose.yml` is located).
 
 ```bash
 GOOGLE_API_KEY=YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE
