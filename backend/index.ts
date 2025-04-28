@@ -14,13 +14,9 @@ const PORT = process.env.PORT || 3001;
 
 // Define an initial output to be placed for example "Hello I am a developer assistant ..."
 
-// Add history 
-
-// Add streaming of output
-
 //comment all code
 
-//ask chatgpt for suggestions on things to implement
+//handle errors gracefully
 
 //Markdown format in frontend
 
@@ -56,16 +52,26 @@ const model = new ChatGoogleGenerativeAI({
       // Add the new user query
       messages.push(new HumanMessage(query));
 
+      // Remove this after testing is done
       console.log("Messages being sent to the LLM:", JSON.stringify(messages, null, 2));
   
-      const response = await model.invoke(messages);
-  
-      res.json({ response: response.text });
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      const stream = await model.stream(messages);
+
+      for await (const chunk of stream) {
+        // Each chunk has a `.content` field
+        res.write(chunk.content);
+      }
+
+      res.end();
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Something went wrong!' });
+      res.status(500).json({ error: 'Something went wrong during streaming.' });
     }
-  });
+});
   
 
 app.listen(PORT, () => {

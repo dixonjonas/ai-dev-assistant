@@ -15,26 +15,51 @@ const App: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!query.trim()) return; // Don't send empty queries
-
+  
     setLoading(true);
     setError(null);
-
+    setResponse(''); // Start with empty response
+  
     try {
-      const res = await axios.post('http://localhost:3001/api/query', {
-        history: chatHistory,
-        query: query,
+      const res = await fetch('http://localhost:3001/api/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          history: chatHistory,
+          query: query,
+        }),
       });
-
-      const assistantReply = res.data.response;
-
-      // Update history: user question + assistant reply
+  
+      if (!res.body) throw new Error('No response body');
+  
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+  
+      let assistantReply = '';
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const chunk = decoder.decode(value, { stream: true });
+        assistantReply += chunk;
+        
+        // Slowing down the stream slightly
+        await new Promise(resolve => setTimeout(resolve, 100));
+  
+        // As the assistant types, we update the latest message
+        setResponse((prev) => (prev || '') + chunk);
+      }
+  
+      // When streaming is finished, update full chat history
       setChatHistory((prev) => [
         ...prev,
         { role: 'user', content: query },
         { role: 'assistant', content: assistantReply },
       ]);
-
-      setResponse(assistantReply);
+  
       setQuery(''); // Clear input after sending
     } catch (error) {
       console.error(error);
@@ -43,6 +68,7 @@ const App: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div style={{ maxWidth: 600, margin: 'auto', padding: 20 }}>

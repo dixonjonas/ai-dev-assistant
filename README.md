@@ -7,6 +7,8 @@ Though and work process:
 
 2, Try calling a simple LLM (Step by step approach from here with iterative testing)
 
-3, Scale up backend to where I want it to be
+3, Think about what the user would want: Clean and easy-to-use interface, necessary functionalities such as being being aware of previous conversation history.
 
-4, Scale up frontend
+4, Scale up backend to where I want it to be
+
+5, Scale up frontend
