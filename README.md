@@ -12,3 +12,5 @@ Though and work process:
 4, Scale up backend to where I want it to be
 
 5, Scale up frontend
+
+6, Testing: (Inputting non dev questions, simulating errors such as backend not being connected, testing with wide array of coding questions, etc)

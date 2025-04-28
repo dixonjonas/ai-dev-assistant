@@ -15,11 +15,7 @@ app.use(express.json());
 // Define the port to run the server on
 const PORT = process.env.PORT || 3001;
 
-//comment all code
-
 //remove google API from project
-
-//remove logging of llm prompt
 
 // Define the system prompt for the LLM
 const SYSTEM_PROMPT = "You are a developer assistant designed to help software engineers quickly answer their technical queries in " +
@@ -54,9 +50,6 @@ const model = new ChatGoogleGenerativeAI({
   
       // Append the current user prompt to the LLM prompt
       messages.push(new HumanMessage(query));
-
-      // Remove this after testing is done
-      console.log("Messages being sent to the LLM:", JSON.stringify(messages, null, 2));
   
       // Set headers for Server-Sent Events to enable streaming the LLM output
       res.setHeader('Content-Type', 'text/event-stream');

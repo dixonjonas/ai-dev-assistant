@@ -54,7 +54,10 @@ const App: React.FC = () => {
       const historyToSend = chatHistory.slice(1);
 
       // Send the query and history to the backend API
-      const res = await fetch('http://localhost:3001/api/query', {
+      const backendHost = process.env.REACT_APP_BACKEND_HOST || 'localhost';
+      const backendPort = process.env.REACT_APP_BACKEND_PORT || 3001;
+      const backendUrl = `http://${backendHost}:${backendPort}/api/query`;
+      const res = await fetch(backendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
