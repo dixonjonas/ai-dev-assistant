@@ -39,7 +39,7 @@ Replace `YOUR_ACTUAL_GOOGLE_GEMINI_API_KEY_HERE` with your valid API key which c
 Navigate to the root directory of your project in the terminal (where `docker-compose.yml` is located) and run:
 
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 
 Docker Compose will create the necessary Docker network, build the images, and start the backend and frontend containers. You will see logs from both services in your terminal.
