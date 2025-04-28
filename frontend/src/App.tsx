@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -73,15 +75,40 @@ const App: React.FC = () => {
   return (
     <div style={{ maxWidth: 600, margin: 'auto', padding: 20 }}>
       <h1>AI Developer Assistant</h1>
-
+  
       <div style={{ marginBottom: 20 }}>
         {chatHistory.map((msg, idx) => (
           <div key={idx} style={{ marginBottom: 10 }}>
-            <strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong> {msg.content}
+            <strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong>
+            <div style={{ marginTop: 5, paddingLeft: 10 }}>
+              <ReactMarkdown
+                components={{
+                  code({ node, inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    return !inline && match ? (
+                      <SyntaxHighlighter
+                        style={oneDark}
+                        language={match[1]}
+                        PreTag="div"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {msg.content}
+              </ReactMarkdown>
+            </div>
           </div>
         ))}
       </div>
-
+  
       <textarea
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -92,11 +119,36 @@ const App: React.FC = () => {
       <button onClick={handleSubmit} disabled={loading} style={{ marginBottom: 10 }}>
         {loading ? 'Loading...' : 'Submit'}
       </button>
-
+  
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {response && (
-        <div>
-          <strong>Latest Response:</strong> {response}
+        <div style={{ marginTop: 20 }}>
+          <strong>Latest Response:</strong>
+          <div style={{ marginTop: 5, paddingLeft: 10 }}>
+            <ReactMarkdown
+              components={{
+                code({ node, inline, className, children, ...props }: any) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match ? (
+                    <SyntaxHighlighter
+                      style={oneDark}
+                      language={match[1]}
+                      PreTag="div"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+              }}
+            >
+              {response}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
     </div>

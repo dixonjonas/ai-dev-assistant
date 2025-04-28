@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3001;
 
 //Markdown format in frontend
 
-// remove google API from project
+//remove google API from project
 
 const SYSTEM_PROMPT = `You are a developer assistant designed to help software engineers quickly answer their technical queries in 
                             natural language. Your goal is to provide concise, accurate, and relevant responses for a wide range of 
